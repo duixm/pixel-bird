@@ -1,0 +1,90 @@
+name: pixel_bird
+description: "Pixel Bird - 一款跨平台（iOS / Android）的像素小鸟休闲游戏，基于 Flutter + Flame 引擎构建。"
+publish_to: 'none'
+
+# 版本号遵循 Flutter 约定：<version>+<build>。
+# version 为面向用户展示的版本，build 为内部构建号（Android versionCode / iOS CFBundleVersion）。
+version: 1.0.0+1
+
+environment:
+  # Dart SDK 下限 3.9.0（Flutter 3.35 附带）。
+  # 上限不写死，以便未来升级 Flutter 时无需改动本文件。
+  sdk: '>=3.9.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ---- 游戏引擎与音频 ----
+  # Flame 提供固定步长游戏循环、组件树（FCS）、碰撞检测、输入与视口。
+  #
+  # 版本上限说明：flame 1.36.0 起要求 Dart >=3.11（需 Flutter 3.47+）。
+  # 当前基线为 Flutter 3.35 / Dart 3.9，因此锁定在 1.35.x 系列。
+  # 若升级到 Flutter 3.47+，可放开上限至 ^1.38。
+  flame: '>=1.35.1 <1.36.0'
+
+  # flame_audio 是 Flame 官方对 audioplayers 的桥接，用于音效池与背景音乐。
+  flame_audio: ^2.11.7
+
+  # ---- 本地持久化 ----
+  # 存储最高分、游玩局数、静音偏好等轻量数据。
+  shared_preferences: ^2.5.3
+
+  # ---- 系统能力 ----
+  # 保持屏幕常亮，避免游戏过程中息屏。
+  wakelock_plus: ^1.3.2
+
+  # audioplayers 与 path_provider 由 flame_audio / 归档服务直接引用，
+  # 需显式声明为直接依赖（否则触发 depend_on_referenced_packages 检查）。
+  audioplayers: ^6.5.1
+  path_provider: ^2.1.5
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+  # 生成各平台启动图标（见下方 flutter_launcher_icons 配置）。
+  flutter_launcher_icons: ^0.14.4
+
+# ---------------------------------------------------------------------------
+# 启动图标生成配置
+# 运行：dart run flutter_launcher_icons
+# 前置条件：assets/images/app_icon.png（1024x1024，无透明通道更佳）
+# ---------------------------------------------------------------------------
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/images/app_icon.png"
+  adaptive_icon_background: "#4EC0CA"
+  adaptive_icon_foreground: "assets/images/app_icon_foreground.png"
+
+flutter:
+  uses-material-design: true
+
+  # -------------------------------------------------------------------------
+  # 资源清单
+  # 注意：Flutter 不会递归扫描子目录，每个需要打包的子目录都必须显式声明。
+  # -------------------------------------------------------------------------
+  assets:
+    - assets/images/
+    - assets/audio/
+
+  # ---------------------------------------------------------------------------
+  # 字体（可选）
+  #
+  # 默认注释掉：Flutter 在构建时会校验字体文件是否存在，若此处声明了
+  # 不存在的 .ttf，会导致 `flutter test` / `flutter build` 直接报错
+  # 「unable to locate asset entry」。因此默认不声明，让游戏使用系统字体。
+  #
+  # 如需像素风字体：把字体文件放到 assets/fonts/ 下，然后取消下面的注释
+  # 并把 fontFamily 改为 'PixelFont'（或按需替换各处的 TextStyle）。
+  # ---------------------------------------------------------------------------
+  # fonts:
+  #   - family: PixelFont
+  #     fonts:
+  #       - asset: assets/fonts/PixelFont-Regular.ttf

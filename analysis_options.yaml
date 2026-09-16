@@ -1,0 +1,24 @@
+# 静态分析配置。
+# 继承 Flutter 官方推荐规则（flutter_lints），并在此基础上针对游戏项目追加约束。
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # 生产代码中残留 print 会拖慢游戏循环，视为错误而非警告。
+    avoid_print: error
+    # 未使用的 import 属于低级错误，直接阻断。
+    unused_import: error
+    # 组件 dispose 后继续 setState 是常见内存泄漏来源。
+    use_build_context_synchronously: error
+
+linter:
+  rules:
+    # Flame 组件通常继承自 Component/PositionComponent 并覆写 update/render，
+    # 此处刻意不启用 prefer_relative_imports，统一使用 package: 绝对导入以便重构。
+    always_declare_return_types: true
+    avoid_empty_else: true
+    prefer_single_quotes: true
+    require_trailing_commas: true
+    sort_child_properties_last: true
+    unnecessary_lambdas: true
+    use_super_parameters: true

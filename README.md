@@ -130,24 +130,58 @@ dart run flutter_launcher_icons
 # 双击项目根目录的 run_web.bat
 ```
 
-脚本会依次完成：拉依赖 → 构建 web 产物 → 补编译内置 shader →
+脚本会依次完成：判断是否需要构建 → 构建 web 产物 → 补编译内置 shader →
 启动本地服务器（`http://127.0.0.1:8090`）→ 用 Edge 打开游戏。
 
 打开后按 `F12`，再按 `Ctrl+Shift+M` 切换到手机模拟视图，选一个竖屏机型
 （如 iPhone 12 Pro）就能体验真实手机手感。
 
+#### 命令行参数
+
+真正的逻辑在 `tool/serve_web.py`，`run_web.bat` 只是双击入口。
+两者参数一致，可直接传给 Python 脚本：
+
+| 参数 | 作用 |
+|---|---|
+| 无 | 自动判断：产物比源码新则跳过编译 |
+| `--rebuild` / `-r` | 强制重新编译 |
+| `--fast` / `-f` | 跳过编译，直接用现有产物 |
+| `--port N` / `-p N` | 换端口（默认 8090） |
+| `--no-open` | 不自动打开浏览器 |
+
+```bash
+# 直接用 Python 运行（等价于双击 bat）
+python tool/serve_web.py --fast
+```
+
+**关于「自动判断」**：脚本比较 `build/web/main.dart.js` 与
+`lib/**`、`web/**`、`pubspec.yaml` 的修改时间。产物更新则跳过编译，
+省掉约 1-2 分钟。改动代码后自动重新编译，不会让你看到旧产物。
+
 > **为什么需要这个脚本，不能直接 `flutter run -d edge`？**
 >
-> 本项目开发机上有两个环境限制，与游戏代码无关：
+> 本项目开发机上有三个环境限制，与游戏代码无关：
 >
 > 1. **`flutter run` 的 dev-server 需要调用 `reg.exe`** 探测浏览器版本，
->    若该程序被安全策略拦截，命令会直接失败。脚本改用 Python 静态服务器托管。
-> 2. **Release 构建时 `impellerc` 未能收到 `shader_lib` 的 include 路径**，
+>    本机该程序被安全策略拦截，命令直接失败。脚本改用 Python 静态服务器托管。
+> 2. **构建时 `impellerc` 未能收到 `shader_lib` 的 include 路径**，
 >    导致内置 `ink_sparkle.frag` 编译失败并中断构建。脚本在构建后
->    手动补编译这一个文件。
+>    手动补编译这一个文件（`ensure_shader()`），检测到缺失会自动修复。
+> 3. **本机 `python` 不在 Windows PATH 中**，只有 WorkBuddy 管理的那一份。
+>    因此 `run_web.bat` 会按 `python` → `py` → 管理目录 → 常见安装位置
+>    的顺序探测解释器，而不是直接调用 `python`。
 >
-> 这两个问题都属于 Flutter 工具链在本机的环境故障，不影响游戏逻辑。
+> 这三项都属于本机环境故障，不影响游戏逻辑。
 > 换一台环境正常的机器，直接 `flutter run -d chrome` 即可。
+
+> **Windows 批处理的编码陷阱**
+>
+> `run_web.bat` 刻意写成**纯 ASCII**。cmd.exe 用系统 OEM 代码页
+> （中文系统是 GBK）解析 .bat 文件，UTF-8 中文会被错误解码，
+> 而错位后的字节对可能包含 `&`、`|` 等控制字符，直接破坏脚本语法。
+> 所有面向用户的中文提示都由 Python 脚本输出，Python 处理 UTF-8 没有问题。
+>
+> 修改该文件时请保持纯 ASCII，否则可能整个脚本失效。
 
 ## 项目结构
 
@@ -182,7 +216,8 @@ dart run flutter_launcher_icons
 │       ├── score_storage.dart       # SharedPreferences 存档
 │       └── audio_service.dart       # 音效池 + 音源自动回退
 ├── tool/
-│   └── generate_icon_test.dart      # 应用图标生成器
+│   ├── generate_icon_test.dart      # 应用图标生成器
+│   └── serve_web.py                 # 本地预览启动器（run_web.bat 的实际逻辑）
 ├── test/
 │   ├── difficulty_curve_test.dart   # 难度曲线不变量测试（13 个）
 │   └── game_world_test.dart         # 游戏世界集成测试（12 个）

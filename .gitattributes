@@ -1,0 +1,7 @@
+# Windows 批处理必须使用 CRLF 行尾。
+# LF-only 的 .bat 在 cmd.exe 下解析多行块（if / for / goto）时可能出错。
+*.bat text eol=crlf
+
+# Python 与 Dart 源码统一 LF
+*.py text eol=lf
+*.dart text eol=lf

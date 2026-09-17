@@ -181,7 +181,15 @@ python tool/serve_web.py --fast
 > 而错位后的字节对可能包含 `&`、`|` 等控制字符，直接破坏脚本语法。
 > 所有面向用户的中文提示都由 Python 脚本输出，Python 处理 UTF-8 没有问题。
 >
-> 修改该文件时请保持纯 ASCII，否则可能整个脚本失效。
+> 修改该文件后请跑一次检查：
+>
+> ```bash
+> python tool/check_bat.py
+> ```
+>
+> 它会检查五类批处理陷阱——非 ASCII 编码、CRLF 行尾、括号配平、
+> **延迟展开**（块内 `set` 后用 `%VAR%` 读到旧值，最隐蔽的一类）、
+> `goto` 悬空。加 `--selftest` 可验证检查器本身有效。
 
 ## 项目结构
 
@@ -217,7 +225,8 @@ python tool/serve_web.py --fast
 │       └── audio_service.dart       # 音效池 + 音源自动回退
 ├── tool/
 │   ├── generate_icon_test.dart      # 应用图标生成器
-│   └── serve_web.py                 # 本地预览启动器（run_web.bat 的实际逻辑）
+│   ├── serve_web.py                 # 本地预览启动器（run_web.bat 的实际逻辑）
+│   └── check_bat.py                 # .bat 静态检查（沙箱内无法运行 bat，改用静态分析）
 ├── test/
 │   ├── difficulty_curve_test.dart   # 难度曲线不变量测试（13 个）
 │   └── game_world_test.dart         # 游戏世界集成测试（12 个）
@@ -462,6 +471,16 @@ flutter test test/game_world_test.dart
 
 # 生成应用图标
 flutter test tool/generate_icon_test.dart
+```
+
+批处理脚本的静态检查（不依赖 cmd.exe，沙箱环境也能跑）：
+
+```bash
+# 检查 run_web.bat
+python tool/check_bat.py
+
+# 验证检查器本身有效（正反双向用例）
+python tool/check_bat.py --selftest
 ```
 
 > **注意**：`flutter test` 会启动 `flutter_tester` 进程并通过本地 WebSocket 回连。
